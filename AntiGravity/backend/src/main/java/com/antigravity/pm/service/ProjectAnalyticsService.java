@@ -50,7 +50,7 @@ public class ProjectAnalyticsService {
     }
 
     private TaskInfo mapToDTO(Task task) {
-        return new TaskInfo(task.getId(), task.getTitle(), task.getStatus(), task.getDueDate());
+        return new TaskInfo(task.getId(), task.getTitle(), task.getStatus(), task.getPriority(), task.getTags(), task.getDueDate());
     }
 }
 
