@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskLane Project Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+    <!-- Auth Overlay -->
+    <div id="auth-overlay" class="overlay">
+        <div class="auth-card card">
+            <div class="logo">TaskLane</div>
+            <h3 id="auth-title">Login to Your Account</h3>
+            <form id="auth-form">
+                <input type="text" id="username" placeholder="Username" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <select id="role" style="display: none;">
+                    <option value="ROLE_ADMIN">Admin</option>
+                    <option value="ROLE_MEMBER">Member</option>
+                </select>
+                <button type="submit" class="btn" style="width: 100%;">Submit</button>
+            </form>
+            <p id="auth-toggle" style="margin-top: 1rem; color: var(--primary-color); cursor: pointer; text-align: center; font-size: 0.875rem;">Need an account? Register</p>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="sidebar">
+        <div class="logo">TaskLane</div>
+        <div class="nav-item active" data-target="dashboard">Dashboard</div>
+        <div class="nav-item" data-target="projects">Projects</div>
+                <div class="nav-item" data-target="tasks">Tasks</div>
+        <div class="nav-item" data-target="timeline">Timeline</div>
+        <div class="nav-item" id="logout-btn" style="margin-top: auto;">Logout</div>
+    </div>
+    
+    <div class="main-content">
+        <div class="header">
+            <h2 id="welcome-msg">Welcome</h2>
+            <button class="btn" id="new-project-btn">+ New Project</button>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="view-dashboard" class="view active">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-title">Total Projects</div>
+                    <div class="card-value" id="stat-projects">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Active Tasks</div>
+                    <div class="card-value" id="stat-tasks">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Completion Rate</div>
+                    <div class="card-value" id="stat-completion">0%</div>
+                </div>
+            </div>
+            
+            <h3 style="margin-top: 3rem; margin-bottom: 1rem;">Recent Tasks</h3>
+            <div class="card" style="padding: 0;" id="dashboard-tasks">
+                <!-- Tasks injected here -->
+            </div>
+        </div>
+
+                <!-- Timeline View -->
+        <div id="view-timeline" class="view" style="display: none;">
+            <h3>Project Timeline</h3>
+            <div id="timeline-feed" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <!-- Activities injected here -->
+            </div>
+        </div>
+
+        <!-- Projects View -->
+        <div id="view-projects" class="view" style="display: none;">
+            <h3>Projects</h3>
+            <div class="dashboard-grid" id="projects-list">
+                <!-- Projects injected here -->
+            </div>
+        </div>
+
+        <!-- Tasks View -->
+        <div id="view-tasks" class="view" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>Tasks</h3>
+                <button class="btn" id="new-task-btn" style="padding: 0.5rem 1rem; font-size: 0.875rem;">+ New Task</button>
+            </div>
+            <div class="card" style="padding: 0;" id="tasks-list">
+                <!-- Tasks injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Project/Task -->
+    <div id="modal-overlay" class="overlay" style="display: none;">
+        <div class="card" style="width: 400px;">
+            <h3 id="modal-title">Create</h3>
+            <form id="modal-form">
+                <input type="text" id="modal-input1" placeholder="Title/Name" required style="width: 100%; margin-bottom: 1rem; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white;">
+                <input type="text" id="modal-input2" placeholder="Description" style="width: 100%; margin-bottom: 1rem; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white;">
+                <select id="modal-select" style="display: none; width: 100%; margin-bottom: 1rem; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white;">
+                    <!-- Options -->
+                </select>
+                <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" id="modal-close" class="btn" style="background: transparent; border: 1px solid var(--text-muted);">Cancel</button>
+                    <button type="submit" class="btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Project Settings Modal -->
+    <div id="settings-modal" class="overlay" style="display: none;">
+        <div class="card" style="width: 400px; max-width: 90%; background: #fff; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0; color: #333;">Project Settings</h3>
+                <span id="settings-close" style="cursor: pointer; font-size: 1.5rem; line-height: 1; color: #333;">&times;</span>
+            </div>
+            <form id="settings-form">
+                <input type="hidden" id="settings-id">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: #333;">Project Name</label>
+                    <input type="text" id="settings-name" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; color: #333; background: #fff;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: #333;">Description</label>
+                    <textarea id="settings-desc" rows="3" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; color: #333; background: #fff;"></textarea>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: #333;">Deadline</label>
+                    <input type="date" id="settings-deadline" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; color: #333; background: #fff;">
+                </div>
+                <button type="submit" class="btn" style="width: 100%; margin-bottom: 1rem;">Save Changes</button>
+            </form>
+            
+            <div style="border-top: 1px solid #ffcccc; margin-top: 1rem; padding-top: 1rem;">
+                <h4 style="color: #d9534f; margin-top: 0;">Danger Zone</h4>
+                <p style="font-size: 0.875rem; color: #666;">Deleting a project will soft-delete it and hide it from all views. This action requires Admin or Owner privileges.</p>
+                <button id="settings-delete-btn" style="width: 100%; background: #d9534f; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer; font-weight: bold;">Delete Project</button>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
+
+

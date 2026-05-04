@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TaskLane — Premium Project Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">TaskLane</div>
+    <div class="nav-item active" data-target="dashboard">Dashboard</div>
+    <div class="nav-item" data-target="projects">Projects</div>
+    <div class="nav-item" data-target="tasks">Tasks</div>
+    <div class="nav-item" data-target="timeline">Timeline</div>
+    <div class="nav-item" data-target="profile">My Profile</div>
+    <div style="flex:1"></div>
+    <button class="btn" id="new-project-btn" style="margin-bottom: 0.5rem">New Project</button>
+    <button class="btn" id="new-task-btn" style="margin-bottom: 0.5rem">New Task</button>
+    <button class="btn" id="logout-btn" style="background: transparent; border: 1px solid rgba(255,255,255,0.1);">Logout</button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="header">
+      <h2 id="welcome-msg">Dashboard</h2>
+      <div class="notification-container">
+        <div id="notification-bell" class="bell-icon">
+          🔔 <span id="notification-count" class="badge" style="display:none;">0</span>
+        </div>
+        <div id="notification-dropdown" class="dropdown-content" style="display:none;">
+          <div class="dropdown-header">Notifications</div>
+          <div id="notifications-list" class="notifications-list">
+            <div class="empty-msg">No new notifications</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Views -->
+    <div id="view-dashboard" class="view">
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-title">Total Projects</div>
+          <div class="card-value" id="stat-projects">0</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Pending Tasks</div>
+          <div class="card-value" id="stat-tasks">0</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Completion Rate</div>
+          <div class="card-value" id="stat-completion">0%</div>
+        </div>
+      </div>
+      <div style="margin-top: 2rem">
+        <h3>Recent Tasks</h3>
+        <div id="dashboard-tasks" style="margin-top: 1rem"></div>
+      </div>
+    </div>
+
+    <div id="view-projects" class="view" style="display:none;">
+      <h2>Projects</h2>
+      <div id="projects-list" class="dashboard-grid" style="margin-top: 1rem"></div>
+    </div>
+
+    <div id="view-tasks" class="view" style="display:none;">
+      <h2>Kanban Board</h2>
+      <div class="kanban-board" id="kanban-board" style="display: flex; gap: 1rem; margin-top: 1rem; height: 100%;">
+        <div class="kanban-column" id="col-TODO">
+            <h3>TODO</h3>
+            <div class="kanban-tasks" ondrop="drop(event, 'TODO')" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="kanban-column" id="col-DOING">
+            <h3>DOING</h3>
+            <div class="kanban-tasks" ondrop="drop(event, 'DOING')" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="kanban-column" id="col-DONE">
+            <h3>DONE</h3>
+            <div class="kanban-tasks" ondrop="drop(event, 'DONE')" ondragover="allowDrop(event)"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-timeline" class="view" style="display:none;">
+      <h2>Timeline</h2>
+      <div id="timeline-feed" style="margin-top: 1rem"></div>
+    </div>
+
+    <div id="view-profile" class="view" style="display:none;">
+      <h2>My Profile</h2>
+      <div class="card" style="margin-top: 1rem; text-align: center;">
+        <div id="profile-avatar" class="avatar-large" style="margin: 0 auto 1rem;">👤</div>
+        <h3 id="profile-username">Username</h3>
+        <p id="profile-role" style="color: var(--text-muted);"></p>
+        
+        <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+          <h4>Update Avatar</h4>
+          <input type="file" id="avatar-input" style="margin-top: 1rem;" />
+          <button id="upload-avatar-btn" class="btn" style="margin-top: 1rem; width: 100%;">Upload New Avatar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Overlay -->
+  <div id="auth-overlay" class="overlay">
+    <div class="card auth-card">
+      <h1 id="auth-title">TaskLane</h1>
+      <p class="subtitle">Sign in to your account</p>
+      <form id="auth-form">
+        <input type="text" id="username" placeholder="Username" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <select id="role" style="display:none; width: 100%; margin-bottom: 1rem; padding: 0.75rem;">
+          <option value="ROLE_MEMBER">Member</option>
+          <option value="ROLE_ADMIN">Admin</option>
+        </select>
+        <button type="submit" class="btn" style="width: 100%">Submit</button>
+      </form>
+      <div style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted); cursor: pointer;" id="auth-toggle">
+        Need an account? Register
+      </div>
+      <div style="margin-top: 1rem; font-size: 0.8rem; color: #64748b; text-align: center;">
+        Demo: admin / admin123 | member / member123
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Modal -->
+  <div id="modal-overlay" class="overlay" style="display:none;">
+    <div class="card auth-card">
+      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 id="modal-title">Create</h2>
+        <button id="modal-close" style="background:none; border:none; color:white; cursor:pointer; font-size:1.2rem;">&times;</button>
+      </div>
+      <form id="modal-form">
+        <input type="text" id="modal-input1" placeholder="Title" required />
+        <input type="text" id="modal-input2" placeholder="Description" />
+        <select id="modal-priority" style="width: 100%; margin-bottom: 1rem; padding: 0.75rem;">
+          <option value="LOW">Low Priority</option>
+          <option value="MEDIUM" selected>Medium Priority</option>
+          <option value="HIGH">High Priority</option>
+        </select>
+        <input type="text" id="modal-tags" placeholder="Tags (comma separated)" />
+        <select id="modal-select" style="width: 100%; margin-bottom: 1rem; padding: 0.75rem; display:none;"></select>
+        <button type="submit" class="btn" style="width: 100%">Create</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Project Settings Modal -->
+  <div id="settings-modal" class="overlay" style="display:none;">
+    <div class="card auth-card">
+      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Project Settings</h2>
+        <button id="settings-close" style="background:none; border:none; color:white; cursor:pointer; font-size:1.2rem;">&times;</button>
+      </div>
+      <form id="settings-form">
+        <input type="hidden" id="settings-id" />
+        <input type="text" id="settings-name" placeholder="Name" required />
+        <input type="text" id="settings-desc" placeholder="Description" />
+        <input type="date" id="settings-deadline" />
+        <button type="submit" class="btn" style="width: 100%; margin-bottom: 0.5rem">Save Changes</button>
+        <button type="button" class="btn" id="settings-delete-btn" style="width: 100%; background: #ef4444;">Delete Project</button>
+      </form>
+  </div>
+
+  <!-- Task Details Modal (Comments & Attachments) -->
+  <div id="task-details-modal" class="overlay" style="display:none;">
+    <div class="card auth-card" style="width: 500px; max-height: 80vh; overflow-y: auto;">
+      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 id="task-details-title">Task Details</h2>
+        <button id="task-details-close" style="background:none; border:none; color:white; cursor:pointer; font-size:1.2rem;">&times;</button>
+      </div>
+      <div id="task-details-info" style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem;"></div>
+      
+      <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 1rem; padding-top: 1rem;">
+        <h3>Comments</h3>
+        <div id="comments-list" style="margin-top: 0.5rem; margin-bottom: 1rem; display:flex; flex-direction:column; gap:0.5rem;">
+          <!-- Comments go here -->
+        </div>
+        <form id="comment-form">
+          <input type="hidden" id="comment-task-id" />
+          <input type="text" id="comment-text" placeholder="Write a comment..." required />
+          <input type="file" id="comment-file" style="margin-bottom: 1rem; color: var(--text-muted);" />
+          <button type="submit" class="btn" style="width: 100%">Post Comment</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
